@@ -253,8 +253,7 @@ export default function Page() {
               Garden Design Questionnaire
             </h1>
             <p className="mt-1 max-w-prose text-white/80">
-              A calm, 10-minute questionnaire to translate your hopes into a living, breathing
-              garden. Autosaves as you go.
+              A calm, 10-minute questionnaire to help guide your new garden. Autosaves as you go.
             </p>
           </div>
           <Leaf color="#FFF0DD" size={48} className="hidden sm:block" />

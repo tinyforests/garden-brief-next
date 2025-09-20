@@ -6,7 +6,6 @@ import { Leaf, CheckCircle2, Loader2 } from "lucide-react";
 
 import Button from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 
@@ -23,7 +22,6 @@ const SEED_QUESTIONS = [
   { id: "users", label: "Who will use the space? Any pets or children?", helper: "Helps us plan safety, play zones and plant choices.", type: "textarea" },
   { id: "musts", label: "Top three must-haves", helper: "Fire pit, veggie garden, shaded seating, water feature, outdoor bath/shower, wildlife pond, boardwalk, studio, etc.", type: "textarea" },
   { id: "budget", label: "Budget range (AUD)", helper: "This keeps recommendations realistic and reduces redesign later.", type: "range", min: 10000, max: 300000, step: 5000 },
-  { id: "uploads", label: "Upload inspiration / site photos (optional)", helper: "Mood shots, favourite materials, or current site pics.", type: "files" },
   { id: "extras", label: "Anything else to share?", helper: "Dreams, constraints, timelines, or accessibility needs.", type: "textarea" },
 ];
 
@@ -31,10 +29,16 @@ const brand = { bg: "#3E4636", paper: "#FFF0DD" };
 
 function useAutosave(key, initial) {
   const [state, setState] = useState(() => {
-    try { const raw = typeof window !== "undefined" ? localStorage.getItem(key) : null; return raw ? JSON.parse(raw) : initial; }
-    catch { return initial; }
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+      return raw ? JSON.parse(raw) : initial;
+    } catch {
+      return initial;
+    }
   });
-  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }, [key, state]);
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify(state)); } catch {}
+  }, [key, state]);
   return [state, setState];
 }
 
@@ -43,7 +47,6 @@ function Progress({ answers }) {
   const answered = useMemo(() => {
     return SEED_QUESTIONS.filter(q => {
       const v = answers[q.id];
-      if (q.type === "files") return v && v.length > 0;
       if (Array.isArray(v)) return v.length > 0;
       return v !== undefined && v !== null && String(v).trim() !== "";
     }).length;
@@ -63,32 +66,33 @@ function Progress({ answers }) {
 
 function Chip({ checked, children, onClick }) {
   return (
-    <button type="button" onClick={onClick}
-      className={`px-3 py-1 rounded-full border text-sm transition ${checked ? "bg-black text-white border-black" : "bg-white text-black border-black/20 hover:border-black"}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1 rounded-full border text-sm transition ${
+        checked ? "bg-black text-white border-black" : "bg-white text-black border-black/20 hover:border-black"
+      }`}
+    >
       {children}
     </button>
   );
 }
 
 export default function Page() {
-  const [answers, setAnswers] = useAutosave("gs-garden-brief", { maintenance:4, budget:50000, purpose:[], style:[] });
+  const [answers, setAnswers] = useAutosave("gs-garden-brief", {
+    maintenance: 4,
+    budget: 50000,
+    purpose: [],
+    style: [],
+  });
   const [sending, setSending] = useState(false);
-  const [previews, setPreviews] = useState([]);
 
-  useEffect(() => {
-    const files = answers.uploads || [];
-    const urls = files.map(f => URL.createObjectURL(f));
-    setPreviews(urls);
-    return () => urls.forEach(u => URL.revokeObjectURL(u));
-  }, [answers.uploads]);
-
-  const update = (id, value) => setAnswers(s => ({...s, [id]: value}));
+  const update = (id, value) => setAnswers(s => ({ ...s, [id]: value }));
 
   const resetForm = () => {
     if (confirm("Clear all answers?")) {
       try { localStorage.removeItem("gs-garden-brief"); } catch {}
-      setAnswers({ maintenance:4, budget:50000, purpose:[], style:[] });
-      setPreviews([]);
+      setAnswers({ maintenance: 4, budget: 50000, purpose: [], style: [] });
     }
   };
 
@@ -136,7 +140,8 @@ export default function Page() {
               Garden Design Questionnaire
             </h1>
             <p className="mt-1 max-w-prose text-white/80">
-              A calm, 10-minute questionnaire to translate your hopes into a living, breathing garden. Autosaves as you go.
+              A calm, 10-minute questionnaire to translate your hopes into a living, breathing
+              garden. Autosaves as you go.
             </p>
           </div>
           <Leaf color="#FFF0DD" size={48} className="hidden sm:block" />
@@ -159,17 +164,28 @@ export default function Page() {
                         const list = answers[q.id] || [];
                         const checked = list.includes(opt);
                         return (
-                          <Chip key={opt} checked={checked} onClick={() => {
-                            const next = checked ? list.filter(x => x !== opt) : [...list, opt];
-                            update(q.id, next);
-                          }}>{opt}</Chip>
+                          <Chip
+                            key={opt}
+                            checked={checked}
+                            onClick={() => {
+                              const next = checked ? list.filter(x => x !== opt) : [...list, opt];
+                              update(q.id, next);
+                            }}
+                          >
+                            {opt}
+                          </Chip>
                         );
                       })}
                     </div>
                   )}
 
                   {q.type === "textarea" && (
-                    <Textarea className="mt-1" placeholder="Type here..." value={answers[q.id] || ""} onChange={e => update(q.id, e.target.value)} />
+                    <Textarea
+                      className="mt-1"
+                      placeholder="Type here..."
+                      value={answers[q.id] || ""}
+                      onChange={e => update(q.id, e.target.value)}
+                    />
                   )}
 
                   {q.type === "slider" && (
@@ -177,30 +193,31 @@ export default function Page() {
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span>Low</span><span>Medium</span><span>High</span>
                       </div>
-                      <Slider value={[answers[q.id] ?? 4]} min={q.min} max={q.max} step={1} onValueChange={v => update(q.id, v[0])} />
+                      <Slider
+                        value={[answers[q.id] ?? 4]}
+                        min={q.min}
+                        max={q.max}
+                        step={1}
+                        onValueChange={v => update(q.id, v[0])}
+                      />
                       <div className="mt-2 text-sm">Current: <b>{answers[q.id] ?? 4}/10</b></div>
                     </div>
                   )}
 
                   {q.type === "range" && (
                     <div>
-                      <input type="range" min={q.min} max={q.max} step={q.step} value={answers[q.id] ?? 50000} onChange={e => update(q.id, Number(e.target.value))} className="w-full" />
-                      <div className="mt-2 text-sm">Approx. budget: <b>A${(answers[q.id] ?? 50000).toLocaleString()}</b></div>
-                    </div>
-                  )}
-
-                  {q.type === "files" && (
-                    <div className="space-y-3">
-                      <Input type="file" multiple accept="image/*" onChange={e => update(q.id, Array.from(e.target.files || []))} />
-                      {previews.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2">
-                          {previews.map((src, i) => (
-                            <div key={i} className="aspect-square overflow-hidden rounded-xl border border-black/10">
-                              <img src={src} alt={`preview-${i}`} className="h-full w-full object-cover" />
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <input
+                        type="range"
+                        min={q.min}
+                        max={q.max}
+                        step={q.step}
+                        value={answers[q.id] ?? 50000}
+                        onChange={e => update(q.id, Number(e.target.value))}
+                        className="w-full"
+                      />
+                      <div className="mt-2 text-sm">
+                        Approx. budget: <b>A${(answers[q.id] ?? 50000).toLocaleString()}</b>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -214,15 +231,21 @@ export default function Page() {
             {sending ? (<><Loader2 size={18} className="animate-spin" />Submitting…</>) : (<>Submit to Gardener & Son</>)}
           </Button>
 
-          <Button onClick={resetForm} className="border-white/30 bg-transparent text-white/90 hover:text-white">
+          <Button
+            onClick={resetForm}
+            className="border-white/30 bg-transparent text-white/90 hover:text-white"
+          >
             Reset
           </Button>
 
-          <div className="ml-auto flex items-center gap-2 text-sm text-white/70"><CheckCircle2 size={16} /> Autosaving locally</div>
+          <div className="ml-auto flex items-center gap-2 text-sm text-white/70">
+            <CheckCircle2 size={16} /> Autosaving locally
+          </div>
         </footer>
 
         <div className="mt-8 text-xs text-white/70">
-          By Gardener & Son · Purpose-driven, regenerative design. We use your answers to design for biodiversity, water, soil & people.
+          By Gardener & Son · Purpose-driven, regenerative design. We use your answers to design for
+          biodiversity, water, soil & people.
         </div>
       </div>
     </div>

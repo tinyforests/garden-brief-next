@@ -1,8 +1,9 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
-html, body { height: 100%; }
-* { -webkit-tap-highlight-color: transparent; }
+/* Font helpers driven by next/font CSS variables */
+@layer base {
+  .font-heading { font-family: var(--font-heading), serif; }
+  .font-body { font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+}

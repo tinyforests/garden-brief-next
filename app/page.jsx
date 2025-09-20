@@ -161,9 +161,9 @@ export default function Page() {
       <div className="mx-auto max-w-4xl px-4 py-8">
         <header className="flex items-start justify-between gap-4 sm:items-center">
           <div className="text-white">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-4xl">Find Your Garden Brief</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-4xl">Garden Design Questionnaire</h1>
             <p className="mt-1 max-w-prose text-white/80">
-              A calm, 10-minute questionnaire to translate your hopes into a living, breathing garden. Autosaves as you go.
+              A calm, 10-minute questionnaire to help guide into your new garden. Autosaves as you go.
             </p>
           </div>
           <Leaf color="#FFF0DD" size={48} className="hidden sm:block" />

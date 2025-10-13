@@ -6,10 +6,15 @@ import { Leaf, CheckCircle2, Loader2 } from "lucide-react";
 
 import Button from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 
 const SEED_QUESTIONS = [
+  // NEW: client details
+  { id: "client_name", label: "Your name", helper: "Primary contact for this project.", type: "text", placeholder: "Jane Citizen" },
+  { id: "client_address", label: "Site address", helper: "Street, suburb, and postcode.", type: "text", placeholder: "123 Garden St, Brunswick VIC 3056" },
+
   { id: "purpose", label: "What is the primary purpose of your garden?", helper: "Choose all that resonate. This guides overall layout and program.", type: "multiselect",
     options: ["Relaxation","Entertaining","Growing food","Children's play","Habitat creation","Exercise / outdoor shower","Pet space"] },
   { id: "style", label: "Which styles or moods are you drawn to?", helper: "Tick a few – we’ll translate these into plant palettes & materials.", type: "multiselect",
@@ -66,13 +71,8 @@ function Progress({ answers }) {
 
 function Chip({ checked, children, onClick }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-3 py-1 rounded-full border text-sm transition ${
-        checked ? "bg-black text-white border-black" : "bg-white text-black border-black/20 hover:border-black"
-      }`}
-    >
+    <button type="button" onClick={onClick}
+      className={`px-3 py-1 rounded-full border text-sm transition ${checked ? "bg-black text-white border-black" : "bg-white text-black border-black/20 hover:border-black"}`}>
       {children}
     </button>
   );
@@ -80,6 +80,8 @@ function Chip({ checked, children, onClick }) {
 
 export default function Page() {
   const [answers, setAnswers] = useAutosave("gs-garden-brief", {
+    client_name: "",
+    client_address: "",
     maintenance: 4,
     budget: 50000,
     purpose: [],
@@ -87,22 +89,24 @@ export default function Page() {
   });
   const [sending, setSending] = useState(false);
 
-  const update = (id, value) => setAnswers(s => ({ ...s, [id]: value }));
+  const update = (id, value) => setAnswers(s => ({...s, [id]: value}));
 
   const resetForm = () => {
     if (confirm("Clear all answers?")) {
       try { localStorage.removeItem("gs-garden-brief"); } catch {}
-      setAnswers({ maintenance: 4, budget: 50000, purpose: [], style: [] });
+      setAnswers({ client_name: "", client_address: "", maintenance:4, budget:50000, purpose:[], style:[] });
     }
   };
 
-  // Netlify Forms: POST to static file at /__forms.html (ensure public/__forms.html exists)
+  // Netlify Forms: POST to static file at /__forms.html (ensure public/__forms.html lists these fields)
   const submitToNetlify = async () => {
     try {
       setSending(true);
       const payload = {
         "form-name": "garden-brief",
         timestamp: new Date().toISOString(),
+        client_name: answers.client_name || "",
+        client_address: answers.client_address || "",
         purpose: (answers.purpose || []).join(", "),
         style: (answers.style || []).join(", "),
         use: answers.use || "",
@@ -140,8 +144,7 @@ export default function Page() {
               Garden Design Questionnaire
             </h1>
             <p className="mt-1 max-w-prose text-white/80">
-              A calm, 10-minute questionnaire to translate your hopes into a living, breathing
-              garden. Autosaves as you go.
+              A calm, 10-minute questionnaire to translate your hopes into a living, breathing garden. Autosaves as you go.
             </p>
           </div>
           <Leaf color="#FFF0DD" size={48} className="hidden sm:block" />
@@ -158,34 +161,32 @@ export default function Page() {
                 {q.helper && <p className="mt-1 text-sm text-black/70">{q.helper}</p>}
 
                 <div className="mt-4">
+                  {q.type === "text" && (
+                    <Input
+                      className="mt-1"
+                      placeholder={q.placeholder || "Type here..."}
+                      value={answers[q.id] || ""}
+                      onChange={e => update(q.id, e.target.value)}
+                    />
+                  )}
+
                   {q.type === "multiselect" && (
                     <div className="flex flex-wrap gap-2">
                       {(q.options || []).map(opt => {
                         const list = answers[q.id] || [];
                         const checked = list.includes(opt);
                         return (
-                          <Chip
-                            key={opt}
-                            checked={checked}
-                            onClick={() => {
-                              const next = checked ? list.filter(x => x !== opt) : [...list, opt];
-                              update(q.id, next);
-                            }}
-                          >
-                            {opt}
-                          </Chip>
+                          <Chip key={opt} checked={checked} onClick={() => {
+                            const next = checked ? list.filter(x => x !== opt) : [...list, opt];
+                            update(q.id, next);
+                          }}>{opt}</Chip>
                         );
                       })}
                     </div>
                   )}
 
                   {q.type === "textarea" && (
-                    <Textarea
-                      className="mt-1"
-                      placeholder="Type here..."
-                      value={answers[q.id] || ""}
-                      onChange={e => update(q.id, e.target.value)}
-                    />
+                    <Textarea className="mt-1" placeholder="Type here..." value={answers[q.id] || ""} onChange={e => update(q.id, e.target.value)} />
                   )}
 
                   {q.type === "slider" && (
@@ -193,31 +194,15 @@ export default function Page() {
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span>Low</span><span>Medium</span><span>High</span>
                       </div>
-                      <Slider
-                        value={[answers[q.id] ?? 4]}
-                        min={q.min}
-                        max={q.max}
-                        step={1}
-                        onValueChange={v => update(q.id, v[0])}
-                      />
+                      <Slider value={[answers[q.id] ?? 4]} min={q.min} max={q.max} step={1} onValueChange={v => update(q.id, v[0])} />
                       <div className="mt-2 text-sm">Current: <b>{answers[q.id] ?? 4}/10</b></div>
                     </div>
                   )}
 
                   {q.type === "range" && (
                     <div>
-                      <input
-                        type="range"
-                        min={q.min}
-                        max={q.max}
-                        step={q.step}
-                        value={answers[q.id] ?? 50000}
-                        onChange={e => update(q.id, Number(e.target.value))}
-                        className="w-full"
-                      />
-                      <div className="mt-2 text-sm">
-                        Approx. budget: <b>A${(answers[q.id] ?? 50000).toLocaleString()}</b>
-                      </div>
+                      <input type="range" min={q.min} max={q.max} step={q.step} value={answers[q.id] ?? 50000} onChange={e => update(q.id, Number(e.target.value))} className="w-full" />
+                      <div className="mt-2 text-sm">Approx. budget: <b>A${(answers[q.id] ?? 50000).toLocaleString()}</b></div>
                     </div>
                   )}
                 </div>
@@ -231,21 +216,15 @@ export default function Page() {
             {sending ? (<><Loader2 size={18} className="animate-spin" />Submitting…</>) : (<>Submit to Gardener & Son</>)}
           </Button>
 
-          <Button
-            onClick={resetForm}
-            className="border-white/30 bg-transparent text-white/90 hover:text-white"
-          >
+          <Button onClick={resetForm} className="border-white/30 bg-transparent text-white/90 hover:text-white">
             Reset
           </Button>
 
-          <div className="ml-auto flex items-center gap-2 text-sm text-white/70">
-            <CheckCircle2 size={16} /> Autosaving locally
-          </div>
+          <div className="ml-auto flex items-center gap-2 text-sm text-white/70"><CheckCircle2 size={16} /> Autosaving locally</div>
         </footer>
 
         <div className="mt-8 text-xs text-white/70">
-          By Gardener & Son · Purpose-driven, regenerative design. We use your answers to design for
-          biodiversity, water, soil & people.
+          By Gardener & Son · Purpose-driven, regenerative design. We use your answers to design for biodiversity, water, soil & people.
         </div>
       </div>
     </div>
